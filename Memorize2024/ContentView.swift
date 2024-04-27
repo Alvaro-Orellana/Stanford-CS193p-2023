@@ -8,14 +8,33 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    let emojis = ["🍭", "🎃", "💀", "👻", "🍬", "🧟", "🍫"]
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ForEach(emojis, id: \.self) { emoji in
+            CardView(emoji: emoji, isFaceUp: true)
         }
-        .padding()
+    }
+}
+
+
+struct CardView: View {
+    
+    let emoji: String
+    var isFaceUp: Bool
+    
+    var body: some View {
+        
+        let base = RoundedRectangle(cornerRadius: 30)
+        ZStack {
+            base
+                .stroke(lineWidth: 10)
+                .foregroundColor(.orange)
+            
+            Text(emoji).font(.title)
+           // base.foregroundColor(.white)
+        }
     }
 }
 
