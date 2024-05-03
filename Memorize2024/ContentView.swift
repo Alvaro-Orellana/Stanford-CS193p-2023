@@ -7,34 +7,89 @@
 
 import SwiftUI
 
+struct Card: Identifiable {
+    let id: Int
+    let content: String
+}
+
+
 struct ContentView: View {
+    let themes = [
+        "Halloween" : ["🍭", "🎃", "👻", "🍬", "🧟", "🍫", "🧌", "🦄", "🍑", "☠️"],
+        "Vehicules" : ["✈️", "🚲", "🚕", "🚅", "🚁", "🛵" ,"🚍" ,"🚒" ,"🚜" ,"🚂" ,"🚌" ,"🚢"],
+        "Sports"    : ["🏉", "🏐", "🏀", "⚽️", "🎾", "⚾️", "🏈", "🏓", "🏏", "🏒", "🏸" ,"🥏" ],
+    ]
     
-    let emojis = ["🍭", "🎃", "💀", "👻", "🍬", "🧟", "🍫", "🧌", "🦄", "🍑", "🥹", "☠️"]
-    @State var numberOfCards = 10
+    //@State var numberOfCards = 10
+    @State var currentTheme = "Halloween"
+    let cardsColor: Color = .pink
     
     var body: some View {
         VStack {
             ScrollView {
                 cards
             }
-            cardCountAdjusters
+            themeButtons
         }
-        .padding()
-
+        .navigationTitle("Memorize!")
     }
     
-    var cards: some View {
+    private var cards: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))]) {
-            ForEach(0..<numberOfCards, id: \.self) { index in
-                CardView(emoji: emojis[index])
+            
+            let cards = makePairs(from: currentTheme)
+            ForEach(cards) { card in
+                CardView(emoji: card.content)
                     .aspectRatio(2/3, contentMode: .fit)
             }
         }
         .padding()
-        .foregroundColor(.orange)
+        .foregroundColor(cardsColor)
     }
     
-    var cardCountAdjusters: some View {
+    private var themeButtons: some View {
+        HStack(spacing: 70) {
+            ForEach(themes.keys.sorted(), id: \.self) { theme in
+                Button(action: { currentTheme = theme }) {
+                    VStack {
+                        Image(systemName: getIconName(for: theme))
+                            .font(.title2)
+                        Text(theme)
+                            .font(.caption)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func makePairs(from theme: String) -> [Card] {
+        themes[currentTheme]!
+            .enumerated()
+            .map { (index, emoji) in
+                [Card(id: index * 2, content: emoji), Card(id: index * 2 + 1, content: emoji)]
+            }
+            .joined()
+            .shuffled()
+        
+//        var cards: [Card] = []
+//        
+//        for (index, emoji) in themes[currentTheme]!.enumerated() {
+//            cards += [Card(id: index * 2, content: emoji), Card(id: index * 2 + 1, content: emoji)]
+//        }
+//        return cards.shuffled()
+    }
+    
+    private func getIconName(for theme: String) -> String {
+        switch theme {
+        case "Halloween": "face.smiling.inverse"
+        case "Vehicules": "car"
+        case "Sports"   : "figure.basketball"
+        default         : "questionmark.circle"
+        }
+    }
+    
+    /*
+    private var cardCountAdjusters: some View {
         HStack {
             cardDecreaseButton
             Spacer()
@@ -60,12 +115,13 @@ struct ContentView: View {
         }
         .disabled(numberOfCards + offset < 0 || numberOfCards + offset > emojis.count)
     }
+     */
 }
 
 
 struct CardView: View {
     let emoji: String
-    @State var isFaceUp: Bool = true
+    @State var isFaceUp: Bool = false
     
     
     var body: some View {
