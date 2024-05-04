@@ -12,49 +12,81 @@ struct Card: Identifiable {
     let content: String
 }
 
+enum Theme: Comparable, Identifiable {
+    case halloween
+    case vehicules
+    case sports
+    
+    var id: Self {
+        return self
+    }
+    
+    var textName: String {
+        switch self {
+        case .halloween: "Halloween"
+        case .vehicules: "Vehicules"
+        case .sports:    "Sports"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .halloween: "face.smiling.inverse"
+        case .vehicules: "car"
+        case .sports:    "figure.basketball"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .halloween : .orange
+        case .vehicules : .blue
+        case .sports    : .green
+        }
+    }
+}
 
 struct ContentView: View {
-    let themes = [
-        "Halloween" : ["🍭", "🎃", "👻", "🍬", "🧟", "🍫", "🧌", "🦄", "🍑", "☠️"],
-        "Vehicules" : ["✈️", "🚲", "🚕", "🚅", "🚁", "🛵" ,"🚍" ,"🚒" ,"🚜" ,"🚂" ,"🚌" ,"🚢"],
-        "Sports"    : ["🏉", "🏐", "🏀", "⚽️", "🎾", "⚾️", "🏈", "🏓", "🏏", "🏒", "🏸" ,"🥏" ],
+    let themes: [Theme: [String]] = [
+        .halloween : ["🍭", "🎃", "👻", "🍬", "🧟", "🍫", "🧌", "🦄", "☠️"],
+        .vehicules : ["✈️", "🚲", "🚕", "🚅", "🚁", "🛵" ,"🚍" ,"🚒" ,"🚜" ,"🚂" ,"🚌" ,"🚢"],
+        .sports    : ["🏉", "🏐", "🏀", "⚽️", "🎾", "⚾️", "🏈", "🏓", "🏏", "🏒", "🏸"],
     ]
     
-    //@State var numberOfCards = 10
-    @State var currentTheme = "Halloween"
-    let cardsColor: Color = .pink
+    @State var currentTheme: Theme = .halloween
     
     var body: some View {
-        VStack {
-            ScrollView {
-                cards
+        NavigationStack {
+            VStack {
+                ScrollView {
+                    cards
+                }
+                themeButtons
             }
-            themeButtons
+            .navigationTitle("Memorizar!")
         }
-        .navigationTitle("Memorize!")
     }
     
     private var cards: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))]) {
-            
-            let cards = makePairs(from: currentTheme)
-            ForEach(cards) { card in
+            ForEach(makeCardPairs()) { card in
                 CardView(emoji: card.content)
                     .aspectRatio(2/3, contentMode: .fit)
             }
         }
         .padding()
-        .foregroundColor(cardsColor)
+        .foregroundColor(currentTheme.color)
     }
     
     private var themeButtons: some View {
-        HStack(spacing: 70) {
-            ForEach(themes.keys.sorted(), id: \.self) { theme in
+        HStack(alignment: .firstTextBaseline, spacing: 70) {
+            // Create a button for each theme
+            ForEach(themes.keys.shuffled()) { theme in
                 Button(action: { currentTheme = theme }) {
                     VStack {
-                        Image(systemName: getIconName(for: theme))
-                            .font(.title2)
-                        Text(theme)
+                        Image(systemName: theme.iconName)
+                            .imageScale(.large)
+                        Text(theme.textName)
                             .font(.caption)
                     }
                 }
@@ -62,74 +94,33 @@ struct ContentView: View {
         }
     }
     
-    private func makePairs(from theme: String) -> [Card] {
-        themes[currentTheme]!
+    private func makeCardPairs() -> [Card] {
+        guard let theme = themes[currentTheme] else { return [] }
+        
+        let shuffledPairs = theme
             .enumerated()
             .map { (index, emoji) in
+                // Creates one pair of cards with same emoji, but unique id based on the index
                 [Card(id: index * 2, content: emoji), Card(id: index * 2 + 1, content: emoji)]
             }
             .joined()
             .shuffled()
-        
-//        var cards: [Card] = []
-//        
-//        for (index, emoji) in themes[currentTheme]!.enumerated() {
-//            cards += [Card(id: index * 2, content: emoji), Card(id: index * 2 + 1, content: emoji)]
-//        }
-//        return cards.shuffled()
+            
+        return shuffledPairs
     }
-    
-    private func getIconName(for theme: String) -> String {
-        switch theme {
-        case "Halloween": "face.smiling.inverse"
-        case "Vehicules": "car"
-        case "Sports"   : "figure.basketball"
-        default         : "questionmark.circle"
-        }
-    }
-    
-    /*
-    private var cardCountAdjusters: some View {
-        HStack {
-            cardDecreaseButton
-            Spacer()
-            cardIncreaseButton
-        }
-        .imageScale(.large)
-        .font(.largeTitle)
-    }
-    
-    private var cardIncreaseButton: some View {
-        cardAdjuster(by: +1, imageName: "rectangle.stack.fill.badge.plus")
-
-    }
-    
-    private var cardDecreaseButton: some View {
-        cardAdjuster(by: -1, imageName: "rectangle.stack.fill.badge.minus")
-
-    }
-    
-    private func cardAdjuster(by offset: Int, imageName: String) -> some View {
-        Button(action: { numberOfCards += offset }) {
-            Image(systemName: imageName)
-        }
-        .disabled(numberOfCards + offset < 0 || numberOfCards + offset > emojis.count)
-    }
-     */
 }
 
 
 struct CardView: View {
     let emoji: String
-    @State var isFaceUp: Bool = false
-    
+    @State var isFaceUp: Bool = true
     
     var body: some View {
         ZStack {
             let base = RoundedRectangle(cornerRadius: 20)
 
             base.fill(.white)
-            base.stroke(lineWidth: 3)
+            base.stroke(lineWidth: 2)
             Text(emoji).font(.largeTitle)
             base.opacity(isFaceUp ? 0 : 1)
         }
@@ -137,10 +128,8 @@ struct CardView: View {
             isFaceUp.toggle()
         }
     }
-    
 }
 
 #Preview {
     ContentView()
-    //CardView(emoji: "👁️", isFaceUp: true)
 }
