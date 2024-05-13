@@ -14,50 +14,40 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         cards = []
         for pairIndex in 0..<numberOfPairsOfCards {
             let cardContent = cardContentGenerator(pairIndex)
-            cards.append(Card(id: pairIndex * 2, content: cardContent))
-            cards.append(Card(id: pairIndex * 2 + 1, content: cardContent))
+            cards.append(Card(id: "\(pairIndex+1)a", content: cardContent))
+            cards.append(Card(id: "\(pairIndex+1)b", content: cardContent))
         }
-//        cards.shuffle()
+        cards.shuffle()
     }
     
     var indexOfOneAndOnlyFaceUpCard: Int? {
-        get {
-            var faceUpCount = cards.filter({ $0.isFaceUp }).count
-            if faceUpCount != 1 {
-                return nil
-            } else {
-                return cards.firstIndex(where: { $0.isFaceUp })
-            }
-        }
-        set {
-            for index in cards.indices {
-                cards[index].isFaceUp = index == newValue
-            }
-        }
+        get { cards.indices.filter { cards[$0].isFaceUp }.onlyOne }
+        
+        // Turn all cards face down except the new setted index
+        set { cards.indices.forEach { cards[$0].isFaceUp = $0 == newValue }}
     }
     
     
     mutating func choose(_ card: Card) {
-        guard let chosenCardIndex = cards.firstIndex(where: { $0.id == card.id }) else { return }
+        // The index of the chosen card should always be in the cards array. Ignore a card if is matched or face up
+        guard
+            let chosenCardIndex = cards.firstIndex(where: { $0.id == card.id }),
+            !cards[chosenCardIndex].isMathched,
+            !cards[chosenCardIndex].isFaceUp
+        else { return }
         
-        if !cards[chosenCardIndex].isMathched && !cards[chosenCardIndex].isFaceUp {
+        
+        // Check if there one and only one card face up
+        if let potencialMatchIndex = indexOfOneAndOnlyFaceUpCard {
             
-            if let potencialMatchIndex = indexOfOneAndOnlyFaceUpCard {
-                // Only one card was face up
-                cards[chosenCardIndex].isFaceUp = true
-                
-                if cards[potencialMatchIndex].content == cards[chosenCardIndex].content {
-                    cards[potencialMatchIndex].isMathched = true
-                    cards[chosenCardIndex].isMathched = true
-                    indexOfOneAndOnlyFaceUpCard = nil
-                } else {
-                    //                indexOfOneAndOnlyFaceUpCard = nil
-                    //                cards[faceUpCardIndex].isFaceUp = true
-                }
-            } else {
-                // Either two cards were face up or all cards were face down
-                indexOfOneAndOnlyFaceUpCard = chosenCardIndex
+            if cards[potencialMatchIndex].content == cards[chosenCardIndex].content {
+                cards[potencialMatchIndex].isMathched = true
+                cards[chosenCardIndex].isMathched = true
             }
+            cards[chosenCardIndex].isFaceUp = true
+        } else {
+            // Either two cards were face up or all cards were face down
+            indexOfOneAndOnlyFaceUpCard = chosenCardIndex
         }
     }
     
@@ -67,9 +57,16 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
     
     
     struct Card: Identifiable, Equatable {
-        let id: Int
+        let id: String
         let content: CardContent
         var isFaceUp = false
         var isMathched = false
+    }
+}
+
+
+extension Array {
+    var onlyOne: Element? {
+        count == 1 ? first : nil
     }
 }

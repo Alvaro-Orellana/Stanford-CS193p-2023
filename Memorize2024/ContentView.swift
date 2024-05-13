@@ -35,6 +35,7 @@ struct ContentView: View {
                     .opacity(card.isMathched ? 0 : 1)
                     .onTapGesture {
                         viewModel.choose(card)
+                        
                     }
             }
         }
