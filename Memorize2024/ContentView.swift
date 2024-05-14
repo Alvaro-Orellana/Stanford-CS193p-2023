@@ -8,21 +8,20 @@
 import SwiftUI
 
 struct ContentView: View {
-   
+    
     @ObservedObject var viewModel: EmojiMemoryGame
     
     var body: some View {
-        VStack {
-            ScrollView {
-                cards
+        NavigationStack {
+            VStack {
+                ScrollView {
+                    cards
+                }
+                .padding(5)
+                buttons
             }
-            .padding(5)
-            
-            Button("Shuffle") {
-                viewModel.shuffle()
-            }
+            .navigationTitle(viewModel.title)
         }
-        .navigationTitle("Memorize!")
     }
     
     private var cards: some View {
@@ -32,16 +31,32 @@ struct ContentView: View {
                     .aspectRatio(2/3, contentMode: .fit)
                     .padding(5)
                     .animation(.easeIn, value: viewModel.cards)
-                    .opacity(card.isMathched ? 0 : 1)
                     .onTapGesture {
                         viewModel.choose(card)
-                        
                     }
             }
         }
-        .foregroundColor(.orange)
+        .foregroundColor(viewModel.color)
+    }
+    
+    private var buttons: some View {
+        HStack(spacing: 50) {
+            Button("Shuffle") {
+                viewModel.shuffle()
+            }
+            .buttonStyle(.borderedProminent)
+                
+            Text("Score: \(viewModel.score)")
+            
+            Button("New Game") {
+                viewModel.newGame()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(20)
     }
 }
+
 
 
 struct CardView: View {
@@ -65,13 +80,10 @@ struct CardView: View {
             
             base.opacity(card.isFaceUp ? 0 : 1)
         }
+        .opacity(card.isMathched ? 0 : 1)
     }
 }
 
 #Preview {
     ContentView(viewModel: EmojiMemoryGame())
-    
-//    CardView(MemoryGame.Card(id: 1, content: "w"))
 }
-
-

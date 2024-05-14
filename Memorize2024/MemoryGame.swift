@@ -8,10 +8,16 @@
 import Foundation
 
 struct MemoryGame<CardContent> where CardContent: Equatable {
+    
     private(set) var cards: [Card]
+    private var previouslySeenCards: [Card.ID]
+    private(set) var score: Int
     
     init(numberOfPairsOfCards: Int, cardContentGenerator: (Int) -> CardContent) {
         cards = []
+        previouslySeenCards = []
+        score = 0
+        
         for pairIndex in 0..<numberOfPairsOfCards {
             let cardContent = cardContentGenerator(pairIndex)
             cards.append(Card(id: "\(pairIndex+1)a", content: cardContent))
@@ -20,11 +26,21 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         cards.shuffle()
     }
     
-    var indexOfOneAndOnlyFaceUpCard: Int? {
+    private var indexOfOneAndOnlyFaceUpCard: Int? {
         get { cards.indices.filter { cards[$0].isFaceUp }.onlyOne }
         
-        // Turn all cards face down except the new setted index
-        set { cards.indices.forEach { cards[$0].isFaceUp = $0 == newValue }}
+        set {
+            // Turn all cards face down except the new setted index
+            for index in cards.indices {
+                if cards[index].isFaceUp  {
+                    previouslySeenCards.append(cards[index].id)
+                    cards[index].isFaceUp = false
+                }
+            }
+            if let newValue {
+                cards[newValue].isFaceUp = true
+            }
+        }
     }
     
     
@@ -39,23 +55,38 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         
         // Check if there one and only one card face up
         if let potencialMatchIndex = indexOfOneAndOnlyFaceUpCard {
-            
-            if cards[potencialMatchIndex].content == cards[chosenCardIndex].content {
-                cards[potencialMatchIndex].isMathched = true
-                cards[chosenCardIndex].isMathched = true
-            }
             cards[chosenCardIndex].isFaceUp = true
+            
+            checkIfCardsMatch(card1Index: potencialMatchIndex, card2Index: chosenCardIndex)
         } else {
             // Either two cards were face up or all cards were face down
             indexOfOneAndOnlyFaceUpCard = chosenCardIndex
         }
     }
     
-    mutating func shuffle() {
-        cards.shuffle()
+    private mutating func checkIfCardsMatch(card1Index: Int, card2Index: Int) {
+        if cards[card1Index].content == cards[card2Index].content {
+            cards[card1Index].isMathched = true
+            cards[card2Index].isMathched = true
+            score += 2
+        } else {
+            // Cards did not match check. Decrement score if they were already seen
+            if let card1Id = previouslySeenCards.first(where: { $0 == cards[card1Index].id }),
+               previouslySeenCards.contains(card1Id) {
+                score -= 1
+            }
+            
+            if let card2Id = previouslySeenCards.first(where: { $0 == cards[card2Index].id }),
+               previouslySeenCards.contains(card2Id) {
+                score -= 1
+            }
+        }
     }
     
-    
+    mutating func shuffleCards() {
+        cards.shuffle()
+    }
+        
     struct Card: Identifiable, Equatable {
         let id: String
         let content: CardContent

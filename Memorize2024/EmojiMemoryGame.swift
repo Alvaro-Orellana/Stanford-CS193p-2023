@@ -8,32 +8,88 @@
 import SwiftUI
 
 class EmojiMemoryGame: ObservableObject {
+        
+    private static let themes = [
+        Theme(
+            name: "Sports",
+            emoji: ["🏉", "🏐", "🏀", "⚽️", "🎾", "⚾️", "🏈", "🏓", "🏏", "🏒", "🏸" ,"🥏"],
+            numberOfPairs: 5,
+            color: .blue
+        ),
+        Theme(
+            name: "Halloween",
+            emoji: ["💀", "👻", "🎃", "🍬", "🕷️", "🕸️", "😱", "🙀", "😈", "👹"],
+            numberOfPairs: 7,
+            color: .orange
+        ),
+        Theme(
+            name: "Vehicules",
+            emoji: ["✈️", "🚕", "🚍", "🚅", "🚁", "🚑", "🚜", "🚂", "🚒", "🏎️", "🏸", "⛴️" ,"🚛"],
+            numberOfPairs: 13,
+            color: .yellow
+        )
+    ]
     
-    typealias Card = MemoryGame<String>.Card
-    private static let emojis = ["🏉", "🏐", "🏀", "⚽️", "🎾", "⚾️", "🏈", "🏓", "🏏", "🏒", "🏸" ,"🥏"]
-    
-    @Published
-    private var model = MemoryGame(numberOfPairsOfCards: 10) { emojiIndex in
-        if emojis.indices.contains(emojiIndex) {
-            emojis[emojiIndex]
-
-        } else {
-            // Index out of bounds!
-            "⁉️"
-        }
+    init() {
+        let randomTheme = Self.themes.randomElement()!
+        self.currentTheme = randomTheme
+        self.model = Self.createNewGame(using: randomTheme)
     }
     
-    var cards: Array<Card> {
+    private static func createNewGame(using theme: Theme) -> MemoryGame<String> {
+        var emojis = theme.emoji
+        return MemoryGame(numberOfPairsOfCards: theme.numberOfPairs) { emojiIndex in
+            if !emojis.isEmpty {
+                emojis.removeFirst()
+            } else {
+                "⁉️"
+            }
+        }
+    }
+
+    @Published
+    private var model: MemoryGame<String>
+    private var currentTheme: Theme
+    
+    var cards: [MemoryGame<String>.Card] {
         model.cards
     }
     
+    var title: String {
+        currentTheme.name
+    }
+    
+    var color: Color {
+        currentTheme.color
+    }
+    
+    var score: Int {
+        model.score
+    }
+        
+    
     // MARK: - Intents
     
-    func choose(_ card : Card) {
+    func choose(_ card : MemoryGame<String>.Card) {
         model.choose(card)
     }
     
     func shuffle() {
-        model.shuffle()
+        model.shuffleCards()
+    }
+    
+    func newGame() {
+        let randomTheme = Self.themes.randomElement()!
+        self.currentTheme = randomTheme
+        self.model = Self.createNewGame(using: randomTheme)
+    }
+    
+    struct Theme {
+        let name: String
+        let emoji: Set<String>
+        let numberOfPairs: Int
+        let color: Color
     }
 }
+
+
