@@ -36,7 +36,8 @@ struct ContentView: View {
                     }
             }
         }
-        .foregroundColor(viewModel.color)
+        .foregroundStyle(Gradient(colors: [.red, .black, .green]))
+            //        .foregroundColor(viewModel.color)
     }
     
     private var buttons: some View {

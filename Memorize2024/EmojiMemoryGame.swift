@@ -19,7 +19,7 @@ class EmojiMemoryGame: ObservableObject {
         Theme(
             name: "Halloween",
             emoji: ["💀", "👻", "🎃", "🍬", "🕷️", "🕸️", "😱", "🙀", "😈", "👹"],
-            numberOfPairs: 7,
+            numberOfPairs: nil,
             color: .orange
         ),
         Theme(
@@ -38,7 +38,15 @@ class EmojiMemoryGame: ObservableObject {
     
     private static func createNewGame(using theme: Theme) -> MemoryGame<String> {
         var emojis = theme.emoji
-        return MemoryGame(numberOfPairsOfCards: theme.numberOfPairs) { emojiIndex in
+        
+        let numberOfPairs: Int
+        if let pairs = theme.numberOfPairs {
+            numberOfPairs = min(pairs, theme.emoji.count)
+        } else {
+            numberOfPairs = Int.random(in: 0..<theme.emoji.count)
+        }
+        
+        return MemoryGame(numberOfPairsOfCards: numberOfPairs) { emojiIndex in
             if !emojis.isEmpty {
                 emojis.removeFirst()
             } else {
@@ -87,7 +95,7 @@ class EmojiMemoryGame: ObservableObject {
     struct Theme {
         let name: String
         let emoji: Set<String>
-        let numberOfPairs: Int
+        let numberOfPairs: Int?
         let color: Color
     }
 }

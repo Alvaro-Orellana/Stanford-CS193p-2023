@@ -12,13 +12,15 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
     private(set) var cards: [Card]
     private var previouslySeenCards: [Card.ID]
     private(set) var score: Int
+    private var dateFirstCardWasChosen: Date
     
     init(numberOfPairsOfCards: Int, cardContentGenerator: (Int) -> CardContent) {
         cards = []
         previouslySeenCards = []
         score = 0
+        dateFirstCardWasChosen = .now
         
-        for pairIndex in 0..<numberOfPairsOfCards {
+        for pairIndex in 0..<max(2, numberOfPairsOfCards) {
             let cardContent = cardContentGenerator(pairIndex)
             cards.append(Card(id: "\(pairIndex+1)a", content: cardContent))
             cards.append(Card(id: "\(pairIndex+1)b", content: cardContent))
@@ -45,7 +47,7 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
     
     
     mutating func choose(_ card: Card) {
-        // The index of the chosen card should always be in the cards array. Ignore a card if is matched or face up
+        // The index of the chosen card should always be in the cards array. Ignore a card if it's matched or face up
         guard
             let chosenCardIndex = cards.firstIndex(where: { $0.id == card.id }),
             !cards[chosenCardIndex].isMathched,
@@ -61,24 +63,29 @@ struct MemoryGame<CardContent> where CardContent: Equatable {
         } else {
             // Either two cards were face up or all cards were face down
             indexOfOneAndOnlyFaceUpCard = chosenCardIndex
+            dateFirstCardWasChosen = .now
         }
     }
     
     private mutating func checkIfCardsMatch(card1Index: Int, card2Index: Int) {
+        
         if cards[card1Index].content == cards[card2Index].content {
             cards[card1Index].isMathched = true
             cards[card2Index].isMathched = true
-            score += 2
+
+            let secondsPassed = Date().timeIntervalSince(dateFirstCardWasChosen)
+            score += 200 - Int(secondsPassed) * 20
+            
         } else {
-            // Cards did not match check. Decrement score if they were already seen
+            // Cards did not match. Decrement score if they were already seen
             if let card1Id = previouslySeenCards.first(where: { $0 == cards[card1Index].id }),
                previouslySeenCards.contains(card1Id) {
-                score -= 1
+                score -= 100
             }
             
             if let card2Id = previouslySeenCards.first(where: { $0 == cards[card2Index].id }),
                previouslySeenCards.contains(card2Id) {
-                score -= 1
+                score -= 100
             }
         }
     }
